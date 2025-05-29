@@ -281,7 +281,7 @@
 
     if (userId) {
       try {
-        const userRes = await fetch(`https://gym-gz7c.onrender.com/users`);
+        const userRes = await fetch(`https://gym-backend-7pw8.onrender.com/users`);
 
         const users = await userRes.json();
         const currentUser = users.find(u => u.id == userId);
@@ -305,7 +305,7 @@
       document.querySelector(".top-actions").appendChild(btn);
     }
 
-    const userRes = await fetch(`https://gym-gz7c.onrender.com/users`);
+    const userRes = await fetch(`https://gym-backend-7pw8.onrender.com/users`);  
     const users = await res.json();
     const list = document.getElementById("userList");
     const mobileList = document.getElementById("mobileUserList");

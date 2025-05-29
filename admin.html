@@ -69,16 +69,17 @@
   </table>
 
   <script>
-    async function loadUsers() {
-const res = await fetch("https://gym-gz7c.onrender.com/users");
+    const backendUrl = "https://gym-backend-7pw8.onrender.com";
 
+    async function loadUsers() {
+      const res = await fetch(`${backendUrl}/users`);
       const users = await res.json();
       const tbody = document.querySelector("#usersTable tbody");
       tbody.innerHTML = "";
 
       users.forEach(u => {
         const avatar = localStorage.getItem('avatar_user_' + u.id) || '/image/def.jpg';
-        const isAdmin = u.is_admin === true || u.is_admin === 1;
+        const isAdmin = u.role === "admin";
 
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -98,7 +99,7 @@ const res = await fetch("https://gym-gz7c.onrender.com/users");
 
     async function deleteUser(userId) {
       if (!confirm("Ти впевнений, що хочеш видалити цього користувача?")) return;
-const res = await fetch(`https://gym-gz7c.onrender.com/delete_user/${userId}`, {
+      const res = await fetch(`${backendUrl}/admin/delete_user/${userId}?admin_id=1`, {
         method: "DELETE"
       });
       if (res.ok) {
@@ -110,7 +111,7 @@ const res = await fetch(`https://gym-gz7c.onrender.com/delete_user/${userId}`, {
     }
 
     async function makeAdmin(userId) {
-      const res = await fetch(`https://gym-gz7c.onrender.com/make_admin/${userId}`, {
+      const res = await fetch(`${backendUrl}/make_admin/${userId}`, {
         method: "POST"
       });
       if (res.ok) {

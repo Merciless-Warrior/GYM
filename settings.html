@@ -116,7 +116,7 @@
     const userId = localStorage.getItem('user_id');
     if (!name || !userId) return alert('Помилка: введіть ім’я або user_id відсутній');
 
-const res = await fetch(`https://gym-gz7c.onrender.com/update_username/${userId}`, {
+const res = await fetch(`https://gym-backend-7pw8.onrender.com/update_username/${userId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: name })
@@ -167,7 +167,7 @@ const res = await fetch(`https://gym-gz7c.onrender.com/update_username/${userId}
     const userId = localStorage.getItem('user_id');
     if (!userId) return;
 
-const res = await fetch(`https://gym-gz7c.onrender.com/users`);
+const res = await fetch(`https://gym-backend-7pw8.onrender.com/users`);
     const users = await res.json();
     const user = users.find(u => u.id == userId);
     if (user && user.username) {
