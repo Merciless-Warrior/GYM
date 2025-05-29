@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Власна активність | GUM BRO</title>
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 40px 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #1f1f1f;
+      padding: 30px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+    select, input {
+      background: #2a2a2a;
+      color: #fff;
+    }
+    button {
+      background: #3498db;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .success {
+      color: #2ecc71;
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    .error {
+      color: #e74c3c;
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Власна активність</h1>
+
+    <label for="exercise">Тип вправи</label>
+    <select id="exercise">
+      <option value="pullups">Підтягування</option>
+      <option value="pushups">Відтискання</option>
+      <option value="plank">Планка (сек)</option>
+      <option value="squats">Присідання</option>
+    </select>
+
+    <label for="value">Кількість</label>
+    <input type="number" id="value" placeholder="Наприклад: 100" />
+
+    <button onclick="submitActivity()">💾 Зберегти активність</button>
+
+    <div id="message"></div>
+  </div>
+
+  <script>
+    async function submitActivity() {
+      const userId = localStorage.getItem('user_id');
+      const exercise = document.getElementById('exercise').value;
+      const value = parseInt(document.getElementById('value').value);
+      const message = document.getElementById('message');
+      message.textContent = '';
+      message.className = '';
+
+      if (!userId) {
+        message.textContent = 'Потрібно увійти у акаунт!';
+        message.className = 'error';
+        return;
+      }
+      if (!value || value <= 0) {
+        message.textContent = 'Введіть коректну кількість!';
+        message.className = 'error';
+        return;
+      }
+
+      try {
+const res = await fetch("https://gym-gz7c.onrender.com/save_result", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: parseInt(userId),
+            exercise,
+            value
+          })
+        });
+
+        if (res.ok) {
+          message.textContent = '✅ Успішно збережено!';
+          message.className = 'success';
+          document.getElementById('value').value = '';
+        } else {
+          const data = await res.json();
+          message.textContent = '❌ Помилка: ' + (data.detail || 'невідомо');
+          message.className = 'error';
+        }
+      } catch (err) {
+        message.textContent = '❌ Помилка зʼєднання: ' + err.message;
+        message.className = 'error';
+      }
+    }
+  </script>
+</body>
+</html>

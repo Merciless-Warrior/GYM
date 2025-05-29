@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Моя статистика</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body {
+      margin: 0;
+      padding: 40px 10px;
+      background: #121212;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #1f1f1f;
+      padding: 30px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 900px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    h1 { text-align: center; margin-bottom: 30px; font-size: 28px; }
+    .summary-box, .log-box { background: #292929; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
+    .summary-box div { margin-bottom: 10px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #444; }
+    th { background: #333; color: #fff; }
+    .button-back {
+      background: #e63946;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      display: block;
+      margin: 30px auto 0;
+    }
+    canvas { background-color: #1f1f1f; margin-top: 20px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Моя статистика</h1>
+
+    <div class="summary-box">
+      <div>Загальна кількість підтягувань: 231</div>
+      <div>Загальна кількість відтискань: 312</div>
+      <div>Загальна кількість планки (сек): 1670</div>
+      <div>Загальна кількість присідань: 275</div>
+    </div>
+
+    <h2>Журнал активностей</h2>
+    <div class="log-box">
+      <table>
+        <thead>
+          <tr><th>Дата</th><th>Тип вправи</th><th>Кількість</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>2025-05-25</td><td>Підтягування</td><td>40</td></tr>
+          <tr><td>2025-05-25</td><td>Відтискання</td><td>60</td></tr>
+          <tr><td>2025-05-24</td><td>Планка</td><td>300 сек</td></tr>
+          <tr><td>2025-05-23</td><td>Присідання</td><td>45</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Статистика за тиждень</h2>
+    <canvas id="weekChart" height="200"></canvas>
+
+    <h2>Статистика за місяць</h2>
+    <canvas id="monthChart" height="200"></canvas>
+
+    <button class="button-back" onclick="window.location.href='index.html'">Назад до меню</button>
+  </div>
+
+  <script>
+    const weekCtx = document.getElementById('weekChart').getContext('2d');
+    const weekChart = new Chart(weekCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
+        datasets: [{
+          label: 'Кількість повторень за день',
+          data: [60, 90, 45, 0, 80, 50, 0],
+          backgroundColor: '#4caf50'
+        }]
+      },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    const monthCtx = document.getElementById('monthChart').getContext('2d');
+    const monthChart = new Chart(monthCtx, {
+      type: 'line',
+      data: {
+        labels: Array.from({length: 30}, (_, i) => i + 1),
+        datasets: [{
+          label: 'Повторень за день',
+          data: Array.from({length: 30}, () => Math.floor(Math.random() * 100)),
+          borderColor: '#ff6384',
+          fill: false
+        }]
+      },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+  </script>
+</body>
+</html>

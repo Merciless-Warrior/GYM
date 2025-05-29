@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GUM BRO</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background: url('/image/Снимок экрана 2025-05-25 125837.png') no-repeat center center fixed;
+      background-size: cover;
+      background-color: black;
+      display: flex;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .sidebar h3 {
+      margin-bottom: 15px;
+      font-size: 16px;
+      text-align: center;
+      color: #ccc;
+    }
+    .user-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+    .user-item img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 10px;
+      border: 2px solid #fff;
+    }
+    .user-item span {
+      font-weight: bold;
+      color: #fff;
+    }
+    .wrapper {
+      flex: 1;
+      max-width: 1000px;
+      width: 92%;
+      background-color: rgba(255, 255, 255, 0.92);
+      border-radius: 25px;
+      padding: 30px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.35);
+      backdrop-filter: blur(4px);
+      margin: 50px auto;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      position: relative;
+    }
+    .title {
+      font-size: 42px;
+      font-weight: bold;
+      color: #111;
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      flex-grow: 1;
+    }
+    .settings-button, .stats-button {
+      background: #457b9d;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .stats-button { background: #27ae60; }
+    .dropdown-users {
+      display: none;
+      position: relative;
+    }
+    .dropdown-users-content {
+      display: none;
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1f1f1f;
+      border-radius: 10px;
+      overflow-y: auto;
+      max-height: 300px;
+      width: 220px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+    .dropdown-users-content .user-item {
+      padding: 10px;
+    }
+    .dropdown-users-content .user-item:hover {
+      background-color: #333;
+    }
+    .profile-avatar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .profile-avatar img {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #fff;
+    }
+    .profile-avatar span {
+      color: #111;
+      font-weight: bold;
+      font-size: 15px;
+    }
+    .profile-avatar.hidden {
+      display: none !important;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 25px;
+    }
+    a.block {
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      height: 280px;
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    a.block:hover {
+      transform: scale(1.04);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+    }
+    .block img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .counter-block img {
+      object-fit: contain;
+      background-color: #000;
+    }
+    .block-title {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+      color: #fff;
+      font-weight: 800;
+      text-align: center;
+      padding: 15px 10px;
+      font-size: 22px;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+    }
+    a.block.wide {
+      grid-column: span 2;
+      height: 280px;
+    }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .dropdown-users { display: block; }
+      .grid { grid-template-columns: 1fr; }
+      a.block.wide { grid-column: span 1; }
+      .top-bar { flex-direction: column; align-items: stretch; }
+      .title { font-size: 32px; text-align: center; }
+      .top-actions { flex-direction: column; align-items: center; gap: 12px; }
+      .settings-button, .stats-button {
+        width: 90%; max-width: 280px; justify-content: center; text-align: center;
+      }
+      .profile-avatar span { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="sidebar">
+  <h3>Переглянь статистику інших</h3>
+  <div id="userList"></div>
+</div>
+<div class="wrapper">
+  <div class="top-bar">
+    <div class="title">GUM BRO</div>
+    <div class="top-actions">
+      <button class="settings-button" onclick="location.href='settings.html'">⚙</button>
+      <button class="stats-button" onclick="location.href='stats.html?user_id=' + localStorage.getItem('user_id')">📈 Статистика</button>
+      <div class="dropdown-users">
+        <button class="settings-button" onclick="toggleUserDropdown()">👥 Інші користувачі</button>
+        <div class="dropdown-users-content" id="mobileUserList"></div>
+      </div>
+      <div class="profile-avatar hidden" id="profileAvatar" onclick="location.href='settings.html'">
+        <img id="topAvatar" src="" alt="avatar">
+        <span id="topName">GUM BRO</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <a href="pullups.html" class="block">
+      <img src="/image/pidtyaguvannya_serednim_pryamym_nakachka_org_ua-283x300.jpg" alt="Підтягування" />
+      <div class="block-title">Підтягування</div>
+    </a>
+    <a href="pushups.html" class="block">
+      <img src="/image/images.jpg" alt="Відтискання" />
+      <div class="block-title">Відтискання</div>
+    </a>
+    <a href="plank.html" class="block">
+      <img src="/image/planka.jpg" alt="Планка" />
+      <div class="block-title">Планка</div>
+    </a>
+    <a href="squats.html" class="block">
+      <img src="/image/83280ca6d6f1fa8b083011a9e443fc44.webp" alt="Присідання" />
+      <div class="block-title">Присідання</div>
+    </a>
+    <a href="custom-entry.html" class="block wide">
+      <img src="./image/imageslogo.jpg" style="height: 400px;" alt="Власна активність" />
+      <div class="block-title">Власна активність</div>
+    </a>
+    <a href="counter.html" class="block wide counter-block">
+      <img src="/image/thumbnail-clicker-counter.jpg" alt="Лічильник" />
+      <div class="block-title">Лічильник</div>
+    </a>
+  </div>
+</div>
+
+<script>
+  function toggleUserDropdown() {
+    const dropdown = document.getElementById("mobileUserList");
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  }
+
+  function getAvatarUrl(userId) {
+    const avatar = localStorage.getItem("avatar_user_" + userId);
+    return avatar && avatar.trim() !== "" ? avatar : null;
+  }
+
+  window.onload = async () => {
+    const avatarFromLS = localStorage.getItem('avatar');
+    const password = localStorage.getItem('password');
+    const userId = localStorage.getItem('user_id');
+
+    const profileAvatarDiv = document.getElementById('profileAvatar');
+    const topAvatarImg = document.getElementById('topAvatar');
+    const topNameSpan = document.getElementById('topName');
+
+    const profileAvatar = getAvatarUrl(userId) || avatarFromLS;
+    if (profileAvatar && profileAvatar.startsWith('data:image')) {
+      topAvatarImg.src = profileAvatar;
+      profileAvatarDiv.classList.remove('hidden');
+    } else {
+      profileAvatarDiv.classList.add('hidden');
+    }
+
+    if (userId) {
+      try {
+        const userRes = await fetch(`https://gym-gz7c.onrender.com/users`);
+
+        const users = await userRes.json();
+        const currentUser = users.find(u => u.id == userId);
+        if (currentUser && currentUser.username) {
+          topNameSpan.textContent = currentUser.username;
+          localStorage.setItem("username", currentUser.username);
+        }
+      } catch (e) {
+        console.error("Не вдалося отримати ім’я з сервера", e);
+      }
+    }
+
+    const username = localStorage.getItem('username');
+    if (username === "mersiliess" && password === "bog") {
+      const btn = document.createElement("button");
+      btn.textContent = "👑 Адмін Панель";
+      btn.className = "settings-button";
+      btn.style.background = "#9b59b6";
+      btn.style.marginLeft = "10px";
+      btn.onclick = () => location.href = "admin.html";
+      document.querySelector(".top-actions").appendChild(btn);
+    }
+
+    const userRes = await fetch(`https://gym-gz7c.onrender.com/users`);
+    const users = await res.json();
+    const list = document.getElementById("userList");
+    const mobileList = document.getElementById("mobileUserList");
+
+    users.forEach(u => {
+      const avatarUrl = getAvatarUrl(u.id);
+      const avatarHtml = avatarUrl && avatarUrl.startsWith('data:image') 
+        ? `<img src="${avatarUrl}" alt="avatar">` 
+        : '';
+
+      const el = document.createElement("div");
+      el.className = "user-item";
+      el.innerHTML = `${avatarHtml}<span>${u.username}</span>`;
+      el.onclick = () => window.location.href = `stats.html?user_id=${u.id}`;
+      list?.appendChild(el);
+
+      const mobileEl = document.createElement("div");
+      mobileEl.className = "user-item";
+      mobileEl.innerHTML = `${avatarHtml}<span>${u.username}</span>`;
+      mobileEl.onclick = () => window.location.href = `stats.html?user_id=${u.id}`;
+      mobileList?.appendChild(mobileEl);
+    });
+  };
+</script>
+</body>
+</html>

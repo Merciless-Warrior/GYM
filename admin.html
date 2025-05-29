@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>👑 Адмін Панель | GUM BRO</title>
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px 20px;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #444;
+      text-align: left;
+    }
+    th {
+      background-color: #1f1f1f;
+    }
+    tr:hover {
+      background: #2a2a2a;
+      cursor: pointer;
+    }
+    .avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #fff;
+    }
+    .delete-btn, .admin-btn {
+      background: #e67e22;
+      border: none;
+      padding: 6px 12px;
+      color: white;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .delete-btn {
+      background: #e74c3c;
+    }
+    .admin-indicator {
+      font-size: 18px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>👑 Адмін Панель</h1>
+
+  <table id="usersTable">
+    <thead>
+      <tr><th>ID</th><th>Імʼя</th><th>Фото</th><th>Дія</th><th>Адмін</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function loadUsers() {
+const res = await fetch("https://gym-gz7c.onrender.com/users");
+
+      const users = await res.json();
+      const tbody = document.querySelector("#usersTable tbody");
+      tbody.innerHTML = "";
+
+      users.forEach(u => {
+        const avatar = localStorage.getItem('avatar_user_' + u.id) || '/image/def.jpg';
+        const isAdmin = u.is_admin === true || u.is_admin === 1;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${u.id}</td>
+          <td>${u.username}</td>
+          <td><img src="${avatar}" class="avatar"></td>
+          <td>
+            <button class="delete-btn" onclick="deleteUser(${u.id})">Видалити</button>
+          </td>
+          <td class="admin-indicator">
+            ${isAdmin ? '✅' : `<button class="admin-btn" onclick="makeAdmin(${u.id})">Призначити</button>`}
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm("Ти впевнений, що хочеш видалити цього користувача?")) return;
+const res = await fetch(`https://gym-gz7c.onrender.com/delete_user/${userId}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        alert("Користувача видалено");
+        loadUsers();
+      } else {
+        alert("Помилка при видаленні користувача");
+      }
+    }
+
+    async function makeAdmin(userId) {
+      const res = await fetch(`https://gym-gz7c.onrender.com/make_admin/${userId}`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        alert("Користувача призначено адміністратором");
+        loadUsers();
+      } else {
+        alert("Помилка при призначенні адміністратора");
+      }
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>

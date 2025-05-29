@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Налаштування | GUM BRO</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 80px 20px 40px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: #1f1f1f;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 26px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+      text-align: left;
+    }
+    input[type="text"], input[type="password"], select {
+      width: 100%;
+      padding: 10px;
+      background: #2a2a2a;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: 0.3s;
+    }
+    .green { background: #27ae60; }
+    .green:hover { background: #219150; }
+    .red { background: #c0392b; }
+    .red:hover { background: #a93226; }
+    .gray { background: #444; }
+    .gray:hover { background: #555; }
+    .section {
+      margin-bottom: 40px;
+      text-align: left;
+    }
+    .avatar-preview {
+      margin: 0 auto 30px;
+      display: none;
+    }
+    .avatar-preview img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Налаштування профілю</h1>
+
+    <div class="avatar-preview" id="avatarPreviewContainer">
+      <img id="avatarPreview" src="" alt="Avatar">
+    </div>
+
+    <div class="section">
+      <label for="username">Ім’я користувача</label>
+      <input type="text" id="username" placeholder="Введіть нове ім’я">
+      <button class="green" onclick="updateUsername()">Зберегти ім’я</button>
+    </div>
+
+    <div class="section">
+      <label for="password">Змінити пароль</label>
+      <input type="password" id="oldPassword" placeholder="Старий пароль">
+      <input type="password" id="newPassword" placeholder="Новий пароль">
+      <button class="green" onclick="changePassword()">Змінити пароль</button>
+    </div>
+
+    <div class="section">
+      <label for="avatar">Завантажити аватарку</label>
+      <input type="file" id="avatar" accept="image/*">
+      <button class="gray" onclick="saveAvatar()">Зберегти аватар</button>
+    </div>
+
+    <div class="section">
+      <button class="red" onclick="logout()">Вийти з акаунту</button>
+    </div>
+  </div>
+
+<script>
+  async function updateUsername() {
+    const name = document.getElementById('username').value.trim();
+    const userId = localStorage.getItem('user_id');
+    if (!name || !userId) return alert('Помилка: введіть ім’я або user_id відсутній');
+
+const res = await fetch(`https://gym-gz7c.onrender.com/update_username/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: name })
+    });
+
+    if (res.ok) {
+      alert('Ім’я оновлено.');
+    } else {
+      alert('Помилка при оновленні імені');
+    }
+  }
+
+  function changePassword() {
+    const oldPass = document.getElementById('oldPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    if (!oldPass || !newPass) return alert('Введіть обидва паролі.');
+    localStorage.setItem('password', newPass);
+    alert('Пароль змінено (локально).');
+  }
+
+  function saveAvatar() {
+    const file = document.getElementById('avatar').files[0];
+    if (!file) return alert('Оберіть файл.');
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const userId = localStorage.getItem('user_id');
+      if (userId) {
+        localStorage.setItem('avatar_user_' + userId, dataUrl);
+        document.getElementById('avatarPreview').src = dataUrl;
+        document.getElementById('avatarPreviewContainer').style.display = 'block';
+        alert('Аватар збережено.');
+      } else {
+        alert('Помилка: не знайдено user_id');
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function logout() {
+    if (confirm('Ви впевнені, що хочете вийти?')) {
+      localStorage.removeItem('user_id');
+      location.href = 'index.html';
+    }
+  }
+
+  window.onload = async () => {
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return;
+
+const res = await fetch(`https://gym-gz7c.onrender.com/users`);
+    const users = await res.json();
+    const user = users.find(u => u.id == userId);
+    if (user && user.username) {
+      document.getElementById('username').value = user.username;
+    }
+
+    const avatar = localStorage.getItem('avatar_user_' + userId);
+    if (avatar && avatar.startsWith('data:image/')) {
+      document.getElementById('avatarPreview').src = avatar;
+      document.getElementById('avatarPreviewContainer').style.display = 'block';
+    }
+  };
+</script>
+</body>
+</html>
