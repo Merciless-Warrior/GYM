@@ -14,10 +14,10 @@ app = FastAPI()
 # Монтуємо статичну папку з картинками
 app.mount("/image", StaticFiles(directory="D:/Sport/image"), name="image")
 
-# Налаштування CORS
+# ✅ CORS — дозволяємо тільки твій фронтенд
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://gym-hzou.onrender.com"],  # <- тільки твій домен!
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
