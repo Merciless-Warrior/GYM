@@ -12,7 +12,7 @@ from datetime import datetime
 app = FastAPI()
 
 # Монтуємо статичну папку з картинками
-app.mount("/image", StaticFiles(directory="D:/Sport/image"), name="image")
+app.mount("/image", StaticFiles(directory="image"), name="image")
 
 app.add_middleware(
     CORSMiddleware,
