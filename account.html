@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Моя статистика</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -49,10 +49,11 @@
     <h1>Моя статистика</h1>
 
     <div class="summary-box">
-      <div>Загальна кількість підтягувань: 231</div>
-      <div>Загальна кількість відтискань: 312</div>
-      <div>Загальна кількість планки (сек): 1670</div>
-      <div>Загальна кількість присідань: 275</div>
+      <!-- Підсумки завантажуються сюди динамічно -->
+      <div>Загальна кількість підтягувань: 0</div>
+      <div>Загальна кількість відтискань: 0</div>
+      <div>Загальна кількість планки (сек): 0</div>
+      <div>Загальна кількість присідань: 0</div>
     </div>
 
     <h2>Журнал активностей</h2>
@@ -62,10 +63,7 @@
           <tr><th>Дата</th><th>Тип вправи</th><th>Кількість</th></tr>
         </thead>
         <tbody>
-          <tr><td>2025-05-25</td><td>Підтягування</td><td>40</td></tr>
-          <tr><td>2025-05-25</td><td>Відтискання</td><td>60</td></tr>
-          <tr><td>2025-05-24</td><td>Планка</td><td>300 сек</td></tr>
-          <tr><td>2025-05-23</td><td>Присідання</td><td>45</td></tr>
+          <!-- Логи будуть сюди -->
         </tbody>
       </table>
     </div>
@@ -79,6 +77,7 @@
     <button class="button-back" onclick="window.location.href='index.html'">Назад до меню</button>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const weekCtx = document.getElementById('weekChart').getContext('2d');
     const weekChart = new Chart(weekCtx, {
@@ -87,7 +86,7 @@
         labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
         datasets: [{
           label: 'Кількість повторень за день',
-          data: [60, 90, 45, 0, 80, 50, 0],
+          data: [0, 0, 0, 0, 0, 0, 0],
           backgroundColor: '#4caf50'
         }]
       },
@@ -101,13 +100,75 @@
         labels: Array.from({length: 30}, (_, i) => i + 1),
         datasets: [{
           label: 'Повторень за день',
-          data: Array.from({length: 30}, () => Math.floor(Math.random() * 100)),
+          data: Array(30).fill(0),
           borderColor: '#ff6384',
           fill: false
         }]
       },
       options: { scales: { y: { beginAtZero: true } } }
     });
+
+    const userId = localStorage.getItem('user_id') || 'тут_постав_ідентифікатор_користувача';
+
+    async function loadStats() {
+      try {
+        const res = await fetch(`https://твій_бекенд/results/${userId}`);
+        if (!res.ok) throw new Error('Помилка завантаження даних');
+        const results = await res.json();
+
+        const summary = {
+          'Підтягування': 0,
+          'Відтискання': 0,
+          'Планка': 0,
+          'Присідання': 0
+        };
+
+        const logBody = document.querySelector('.log-box tbody');
+        logBody.innerHTML = '';
+
+        results.forEach(r => {
+          if (summary.hasOwnProperty(r.exercise)) {
+            summary[r.exercise] += r.value;
+          }
+
+          const date = new Date(r.date).toISOString().split('T')[0];
+          const valueDisplay = r.exercise === 'Планка' ? r.value + ' сек' : r.value;
+
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${date}</td><td>${r.exercise}</td><td>${valueDisplay}</td>`;
+          logBody.appendChild(row);
+        });
+
+        const summaryBox = document.querySelector('.summary-box');
+        summaryBox.innerHTML = `
+          <div>Загальна кількість підтягувань: ${summary['Підтягування']}</div>
+          <div>Загальна кількість відтискань: ${summary['Відтискання']}</div>
+          <div>Загальна кількість планки (сек): ${summary['Планка']}</div>
+          <div>Загальна кількість присідань: ${summary['Присідання']}</div>
+        `;
+
+        // Оновлення графіку за тиждень
+        const dayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+        const dayCounts = Array(7).fill(0);
+
+        results.forEach(r => {
+          const d = new Date(r.date);
+          const day = d.getDay(); // неділя=0, понеділок=1
+          const index = day === 0 ? 6 : day - 1; // зміщуємо неділю в кінець
+          dayCounts[index] += r.value;
+        });
+
+        weekChart.data.datasets[0].data = dayCounts;
+        weekChart.update();
+
+        // TODO: оновити monthChart за місяць за аналогією, якщо потрібно
+
+      } catch (error) {
+        console.error('Помилка при завантаженні статистики:', error);
+      }
+    }
+
+    loadStats();
   </script>
 </body>
 </html>

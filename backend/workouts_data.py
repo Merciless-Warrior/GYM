@@ -1,16 +1,23 @@
-from sqlalchemy.orm import Session
-from backend.app_models import WorkoutResult
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from datetime import datetime
+from bson import ObjectId
 
-# ➕ Додати новий результат тренування
-def add_workout_result(db: Session, user_id: int, exercise: str, value: int):
-    if not user_id:
-        raise ValueError("user_id обов’язковий для запису результату")
-    result = WorkoutResult(user_id=user_id, exercise=exercise, value=value)
-    db.add(result)
-    db.commit()
-    db.refresh(result)
+# ➕ Додати результат
+async def add_workout_result(db: AsyncIOMotorDatabase, user_id: str, exercise: str, value: int):
+    result = {
+        "user_id": user_id,
+        "exercise": exercise,
+        "value": value,
+        "date": datetime.utcnow()
+    }
+    r = await db.results.insert_one(result)
+    result["_id"] = r.inserted_id
     return result
 
 # 📄 Отримати всі результати користувача
-def get_user_results(db: Session, user_id: int):
-    return db.query(WorkoutResult).filter_by(user_id=user_id).all()
+async def get_user_results(db: AsyncIOMotorDatabase, user_id: str):
+    cursor = db.results.find({"user_id": user_id})
+    results = []
+    async for r in cursor:
+        results.append(r)
+    return results

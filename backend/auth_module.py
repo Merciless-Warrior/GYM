@@ -1,19 +1,73 @@
-from sqlalchemy.orm import Session
-from backend.app_models import User
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from datetime import datetime
+from bson import ObjectId
 
-def register_user(db: Session, username: str, password: str):
-    existing = db.query(User).filter_by(username=username).first()
+# ➕ Реєстрація користувача
+async def register_user(db: AsyncIOMotorDatabase, username: str, password: str):
+    existing = await db.users.find_one({"username": username})
     if existing:
         return None
 
-    # Якщо логін і пароль співпадають — це адмін
     role = "admin" if username == "mersiliess" and password == "bog" else "user"
 
-    user = User(username=username, password=password, role=role)
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
+    user_data = {
+        "username": username,
+        "password": password,
+        "role": role,
+        "created_at": datetime.utcnow(),
+        "last_seen": datetime.utcnow()
+    }
 
-def authenticate_user(db: Session, username: str, password: str):
-    return db.query(User).filter_by(username=username, password=password).first()
+    result = await db.users.insert_one(user_data)
+    user_data["_id"] = result.inserted_id
+
+    return {
+        "id": str(user_data["_id"]),
+        "username": user_data["username"],
+        "role": user_data["role"]
+    }
+
+# 🔑 Авторизація користувача
+async def authenticate_user(db: AsyncIOMotorDatabase, username: str, password: str):
+    user = await db.users.find_one({"username": username, "password": password})
+    if not user:
+        return None
+
+    # Оновити last_seen
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"last_seen": datetime.utcnow()}}
+    )
+
+    return {
+        "id": str(user["_id"]),
+        "username": user["username"],
+        "role": user.get("role", "user")
+    }
+
+
+async def register_user(db: AsyncIOMotorDatabase, username: str, password: str):
+    existing = await db.users.find_one({"username": username})
+    if existing:
+        print(f"Користувач {username} вже існує")
+        return None
+
+    role = "admin" if username == "mersiliess" and password == "bog" else "user"
+
+    user_data = {
+        "username": username,
+        "password": password,
+        "role": role,
+        "created_at": datetime.utcnow(),
+        "last_seen": datetime.utcnow()
+    }
+
+    result = await db.users.insert_one(user_data)
+    print(f"Додано користувача: {username} з id {result.inserted_id}")
+    user_data["_id"] = result.inserted_id
+
+    return {
+        "id": str(user_data["_id"]),
+        "username": user_data["username"],
+        "role": user_data["role"]
+    }

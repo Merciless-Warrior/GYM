@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>👑 Адмін Панель | GUM BRO</title>
   <style>
     body {
@@ -69,56 +69,75 @@
   </table>
 
   <script>
-    const backendUrl = "https://gym-backend-7pw8.onrender.com";
+    const API_BASE = "https://gym-gz7c.onrender.com"; // <-- твій бекенд URL
+    const adminId = localStorage.getItem('user_id'); // Має бути id адміністратора в localStorage
+
+    if (!adminId) {
+      alert("Будь ласка, увійдіть як адміністратор");
+      window.location.href = 'index.html'; // редірект, якщо нема адмін id
+    }
 
     async function loadUsers() {
-      const res = await fetch(`${backendUrl}/users`);
-      const users = await res.json();
-      const tbody = document.querySelector("#usersTable tbody");
-      tbody.innerHTML = "";
+      try {
+        const res = await fetch(`${API_BASE}/admin/users?admin_id=${adminId}`);
+        if (!res.ok) throw new Error("Не вдалося завантажити користувачів");
 
-      users.forEach(u => {
-        const avatar = localStorage.getItem('avatar_user_' + u.id) || '/image/def.jpg';
-        const isAdmin = u.role === "admin";
+        const users = await res.json();
+        const tbody = document.querySelector("#usersTable tbody");
+        tbody.innerHTML = "";
 
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${u.id}</td>
-          <td>${u.username}</td>
-          <td><img src="${avatar}" class="avatar"></td>
-          <td>
-            <button class="delete-btn" onclick="deleteUser(${u.id})">Видалити</button>
-          </td>
-          <td class="admin-indicator">
-            ${isAdmin ? '✅' : `<button class="admin-btn" onclick="makeAdmin(${u.id})">Призначити</button>`}
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
+        users.forEach(u => {
+          const avatar = localStorage.getItem('avatar_user_' + u.id) || '/image/def.jpg';
+          const isAdmin = u.role === "admin";
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${u.id}</td>
+            <td>${u.username}</td>
+            <td><img src="${avatar}" class="avatar" alt="Аватар"/></td>
+            <td>
+              <button class="delete-btn" onclick="deleteUser('${u.id}')">Видалити</button>
+            </td>
+            <td class="admin-indicator">
+              ${isAdmin ? '✅' : `<button class="admin-btn" onclick="makeAdmin('${u.id}')">Призначити</button>`}
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        alert(error.message);
+      }
     }
 
     async function deleteUser(userId) {
       if (!confirm("Ти впевнений, що хочеш видалити цього користувача?")) return;
-      const res = await fetch(`${backendUrl}/admin/delete_user/${userId}?admin_id=1`, {
-        method: "DELETE"
-      });
-      if (res.ok) {
+
+      try {
+        const res = await fetch(`${API_BASE}/admin/delete_user/${userId}?admin_id=${adminId}`, {
+          method: "DELETE"
+        });
+        if (!res.ok) throw new Error("Помилка при видаленні користувача");
+
         alert("Користувача видалено");
         loadUsers();
-      } else {
-        alert("Помилка при видаленні користувача");
+      } catch (error) {
+        alert(error.message);
       }
     }
 
     async function makeAdmin(userId) {
-      const res = await fetch(`${backendUrl}/make_admin/${userId}`, {
-        method: "POST"
-      });
-      if (res.ok) {
+      if (!confirm("Призначити цього користувача адміністратором?")) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/make_admin/${userId}`, {
+          method: "POST"
+        });
+        if (!res.ok) throw new Error("Помилка при призначенні адміністратора");
+
         alert("Користувача призначено адміністратором");
         loadUsers();
-      } else {
-        alert("Помилка при призначенні адміністратора");
+      } catch (error) {
+        alert(error.message);
       }
     }
 

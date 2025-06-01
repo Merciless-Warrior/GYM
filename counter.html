@@ -146,10 +146,10 @@
 
       <select id="exerciseSelect">
         <option value="">Оберіть вправу</option>
-        <option value="pullups">Підтягування</option>
-        <option value="pushups">Відтискання</option>
-        <option value="plank">Планка (сек)</option>
-        <option value="squats">Присідання</option>
+        <option value="Підтягування">Підтягування</option>
+        <option value="Відтискання">Відтискання</option>
+        <option value="Планка">Планка (сек)</option>
+        <option value="Присідання">Присідання</option>
       </select>
       <button onclick="saveResult()">💾 Зберегти результат</button>
     </div>
@@ -208,10 +208,11 @@
 
       try {
 const res = await fetch("https://gym-backend-7pw8.onrender.com/save_result", {
+
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            user_id: parseInt(userId),
+            user_id: userId,
             exercise: exercise,
             value: count
           })

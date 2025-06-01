@@ -1,25 +1,32 @@
-import sqlite3
+import asyncio
+from motor.motor_asyncio import AsyncIOMotorClient
+from datetime import datetime
 
-def safe_add_columns():
-    conn = sqlite3.connect("db.sqlite3")
-    cursor = conn.cursor()
+MONGO_URI = "mongodb+srv://ilabudko843:IuIqSzif0dmykady@cluster0.lftu1nd.mongodb.net/?retryWrites=true&w=majority"
+DB_NAME = "gymdb"
 
-    # Додаємо поле created_at, якщо його ще немає
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN created_at TEXT;")
-        print("✅ Поле 'created_at' додано.")
-    except sqlite3.OperationalError:
-        print("⚠️ Поле 'created_at' вже існує.")
+async def safe_add_fields():
+    client = AsyncIOMotorClient(MONGO_URI)
+    db = client[DB_NAME]
 
-    # Додаємо поле last_seen, якщо його ще немає
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN last_seen TEXT;")
-        print("✅ Поле 'last_seen' додано.")
-    except sqlite3.OperationalError:
-        print("⚠️ Поле 'last_seen' вже існує.")
+    cursor = db.users.find({})
+    updated_count = 0
 
-    conn.commit()
-    conn.close()
+    async for user in cursor:
+        updates = {}
+        if 'created_at' not in user:
+            updates['created_at'] = datetime.utcnow()
+        if 'last_seen' not in user:
+            updates['last_seen'] = datetime.utcnow()
+
+        if updates:
+            await db.users.update_one(
+                {"_id": user["_id"]},
+                {"$set": updates}
+            )
+            updated_count += 1
+
+    print(f"✅ Оновлено користувачів: {updated_count}")
 
 if __name__ == "__main__":
-    safe_add_columns()
+    asyncio.run(safe_add_fields())
