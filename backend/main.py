@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -8,13 +8,13 @@ from bson import ObjectId
 
 app = FastAPI()
 
+# Монтуємо статичну папку з картинками (один раз!)
 app.mount("/image", StaticFiles(directory="D:/Sport/image"), name="image")
-# Монтуємо статичну папку з картинками
-app.mount("/image", StaticFiles(directory="image"), name="image")
 
+# Налаштування CORS для доступу з будь-якого фронтенду (для продакшена краще вказати конкретні адреси)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Ти можеш обмежити фронтенд тут
+    allow_origins=["*"],  # Можна вказати список фронтенд-доменів замість "*"
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,23 +22,19 @@ app.add_middleware(
 
 MONGO_URI = "mongodb+srv://ilabudko843:IuIqSzif0dmykady@cluster0.lftu1nd.mongodb.net/?retryWrites=true&w=majority"
 client = AsyncIOMotorClient(MONGO_URI)
-db = client['gymdb']  # Вказати ім'я твоєї бази
+db = client['gymdb']  # Ім'я твоєї бази даних
 
-# Pydantic моделі
-
+# Моделі Pydantic для типізації запитів
 class UserIn(BaseModel):
     username: str
     password: str
 
 class SaveResultRequest(BaseModel):
-    user_id: str  # string, оскільки MongoDB ObjectId
+    user_id: str  # id користувача в форматі рядка
     exercise: str
     value: int
 
-class UpdateUsernameRequest(BaseModel):
-    username: str
-
-# Реєстрація користувача
+# Ендпоінт реєстрації
 @app.post("/register")
 async def register(user: UserIn):
     existing = await db.users.find_one({"username": user.username})
@@ -56,7 +52,7 @@ async def register(user: UserIn):
     res = await db.users.insert_one(user_doc)
     return {"msg": "registered", "user_id": str(res.inserted_id)}
 
-# Авторизація
+# Ендпоінт авторизації
 @app.post("/login")
 async def login(user: UserIn):
     existing = await db.users.find_one({"username": user.username, "password": user.password})
@@ -67,7 +63,6 @@ async def login(user: UserIn):
         {"_id": existing["_id"]},
         {"$set": {"last_seen": datetime.utcnow()}}
     )
-
     return {"user_id": str(existing["_id"]), "role": existing.get("role", "user")}
 
 # Збереження результату
@@ -112,10 +107,7 @@ async def get_all_users():
         })
     return users
 
-# Головна сторінка
+# Тестова головна сторінка
 @app.get("/")
 async def root():
     return {"message": "🔥 Fitness backend is running!"}
-
-# Ти можеш дописати адміністраторські ендпоінти аналогічно — через MongoDB методи.
-
