@@ -1,102 +1,126 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel, Field
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from datetime import datetime
 from bson import ObjectId
+from typing import Optional, List, Dict
+
+MONGO_URI = "mongodb+srv://ilabudko843:IuIqSzif0dmykady@cluster0.lftu1nd.mongodb.net/?retryWrites=true&w=majority"
+DB_NAME = "gymdb"
 
 app = FastAPI()
 
-# Монтуємо статичну папку з картинками (один раз!)
 app.mount("/image", StaticFiles(directory="D:/Sport/image"), name="image")
 
-# Налаштування CORS для доступу з будь-якого фронтенду (для продакшена краще вказати конкретні адреси)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Можна вказати список фронтенд-доменів замість "*"
+    allow_origins=["*"],  # Для локального тесту можна так, в проді краще вказати свої домени
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-MONGO_URI = "mongodb+srv://ilabudko843:IuIqSzif0dmykady@cluster0.lftu1nd.mongodb.net/?retryWrites=true&w=majority"
 client = AsyncIOMotorClient(MONGO_URI)
-db = client['gymdb']  # Ім'я твоєї бази даних
+db = client[DB_NAME]
 
-# Моделі Pydantic для типізації запитів
 class UserIn(BaseModel):
     username: str
     password: str
 
 class SaveResultRequest(BaseModel):
-    user_id: str  # id користувача в форматі рядка
+    user_id: str
     exercise: str
     value: int
 
-# Ендпоінт реєстрації
-@app.post("/register")
-async def register(user: UserIn):
-    existing = await db.users.find_one({"username": user.username})
+async def register_user(db: AsyncIOMotorDatabase, username: str, password: str) -> Optional[Dict]:
+    existing = await db.users.find_one({"username": username})
     if existing:
-        raise HTTPException(status_code=400, detail="User already exists")
-
-    role = "admin" if user.username == "mersiliess" and user.password == "bog" else "user"
-    user_doc = {
-        "username": user.username,
-        "password": user.password,
+        return None
+    role = "admin" if username == "mersiliess" and password == "bog" else "user"
+    user_data = {
+        "username": username,
+        "password": password,
         "role": role,
         "created_at": datetime.utcnow(),
         "last_seen": datetime.utcnow()
     }
-    res = await db.users.insert_one(user_doc)
-    return {"msg": "registered", "user_id": str(res.inserted_id)}
+    result = await db.users.insert_one(user_data)
+    user_data["_id"] = result.inserted_id
+    return {
+        "id": str(user_data["_id"]),
+        "username": user_data["username"],
+        "role": user_data["role"]
+    }
 
-# Ендпоінт авторизації
-@app.post("/login")
-async def login(user: UserIn):
-    existing = await db.users.find_one({"username": user.username, "password": user.password})
-    if not existing:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
+async def authenticate_user(db: AsyncIOMotorDatabase, username: str, password: str) -> Optional[Dict]:
+    user = await db.users.find_one({"username": username, "password": password})
+    if not user:
+        return None
     await db.users.update_one(
-        {"_id": existing["_id"]},
+        {"_id": user["_id"]},
         {"$set": {"last_seen": datetime.utcnow()}}
     )
-    return {"user_id": str(existing["_id"]), "role": existing.get("role", "user")}
+    return {
+        "id": str(user["_id"]),
+        "username": user["username"],
+        "role": user.get("role", "user")
+    }
 
-# Збереження результату
-@app.post("/save_result")
-async def save_result(data: SaveResultRequest):
-    user = await db.users.find_one({"_id": ObjectId(data.user_id)})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    result_doc = {
-        "user_id": data.user_id,
-        "exercise": data.exercise,
-        "value": data.value,
+async def add_workout_result(db: AsyncIOMotorDatabase, user_id: str, exercise: str, value: int) -> Dict:
+    result = {
+        "user_id": user_id,
+        "exercise": exercise,
+        "value": value,
         "date": datetime.utcnow()
     }
-    res = await db.results.insert_one(result_doc)
-    return {"msg": "saved", "result_id": str(res.inserted_id)}
+    r = await db.results.insert_one(result)
+    result["_id"] = r.inserted_id
+    return result
 
-# Отримати всі результати користувача
-@app.get("/results/{user_id}")
-async def get_results(user_id: str):
+async def get_user_results(db: AsyncIOMotorDatabase, user_id: str) -> List[Dict]:
     cursor = db.results.find({"user_id": user_id})
     results = []
     async for r in cursor:
-        results.append({
-            "exercise": r["exercise"],
-            "value": r["value"],
-            "date": r["date"]
-        })
+        r["id"] = str(r["_id"])
+        results.append(r)
     return results
 
-# Отримати список усіх користувачів
+@app.post("/register")
+async def api_register(user: UserIn):
+    registered = await register_user(db, user.username, user.password)
+    if not registered:
+        raise HTTPException(status_code=400, detail="User already exists")
+    return {"msg": "registered", "user_id": registered["id"]}
+
+@app.post("/login")
+async def api_login(user: UserIn):
+    auth = await authenticate_user(db, user.username, user.password)
+    if not auth:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"user_id": auth["id"], "role": auth["role"]}
+
+@app.post("/save_result")
+async def api_save_result(data: SaveResultRequest):
+    try:
+        user_obj_id = ObjectId(data.user_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid user_id format")
+
+    user = await db.users.find_one({"_id": user_obj_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    result = await add_workout_result(db, data.user_id, data.exercise, data.value)
+    return {"msg": "saved", "result_id": str(result["_id"])}
+
+@app.get("/results/{user_id}")
+async def api_get_results(user_id: str):
+    results = await get_user_results(db, user_id)
+    return results
+
 @app.get("/users")
-async def get_all_users():
+async def api_get_all_users():
     cursor = db.users.find()
     users = []
     async for u in cursor:
@@ -107,7 +131,6 @@ async def get_all_users():
         })
     return users
 
-# Тестова головна сторінка
 @app.get("/")
 async def root():
     return {"message": "🔥 Fitness backend is running!"}

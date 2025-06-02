@@ -129,7 +129,7 @@
   }
 
   async function fetchResults(userId) {
-const res = await fetch(`https://gym-backend-7pw8.onrender.com/results/${userId}`);
+const res = await fetch(`https://gym-ten-black.vercel.app/results/${userId}`);
     const data = await res.json();
     renderStatistics(data);
   }
@@ -227,7 +227,7 @@ const res = await fetch(`https://gym-backend-7pw8.onrender.com/results/${userId}
     const urlParams = new URLSearchParams(window.location.search);
     const viewedUserId = urlParams.get("user_id") || localStorage.getItem('user_id');
 
-const res = await fetch(`https://gym-backend-7pw8.onrender.com/users`);
+const res = await fetch(`https://gym-ten-black.vercel.app`);
 
     const users = await res.json();
     const user = users.find(u => u.id == viewedUserId);

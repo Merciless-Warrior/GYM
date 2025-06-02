@@ -281,7 +281,7 @@
 
     if (userId) {
       try {
-        const userRes = await fetch(`https://gym-backend-7pw8.onrender.com/users`);
+        const userRes = await fetch(`https://gym-ten-black.vercel.app/users`);
         const users = await userRes.json();
         const currentUser = users.find(u => u.id === userId);
         if (currentUser && currentUser.username) {
@@ -305,7 +305,7 @@
     }
 
     try {
-      const usersRes = await fetch(`https://gym-backend-7pw8.onrender.com/users`);
+      const usersRes = await fetch(`https://gym-ten-black.vercel.app/users`);
       const users = await usersRes.json();
       const list = document.getElementById("userList");
       const mobileList = document.getElementById("mobileUserList");
